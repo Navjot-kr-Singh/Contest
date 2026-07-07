@@ -1,2 +1,4 @@
 .nhost
 .secrets
+.env.development
+.env.production
