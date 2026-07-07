@@ -1,5 +1,4 @@
 import { nhost } from "./nhost.js"
-import { gql } from "graphql-request"
 import { createProjectNode } from "./helper.js"
 
 window.onload = async() => {
@@ -29,33 +28,44 @@ const submitForm = async (event) => {
 
    button.innerHTML = "Processing..."
 
-   const query = gql`
-                mutation MyMutation($title: String, $descriptiion:String, $link: String) {
-                    insert_projects(objects: {description: $title, title: $descriptiion, link: $link}) {
-                    affected_rows
-                }
-    }`
+   // v4: nhost.graphql.request takes a single object { query, variables }
+   // The query string is passed directly (not via gql tag from graphql-request)
+   const response = await nhost.graphql.request({
+      query: `
+         mutation MyMutation($title: String, $description: String, $link: String) {
+            insert_projects(objects: {title: $title, description: $description, link: $link}) {
+               affected_rows
+            }
+         }
+      `,
+      variables: {
+         title: formDataObject.title,
+         description: formDataObject.description,
+         link: formDataObject.link,
+      },
+   })
 
-    const { data } = await nhost.graphql.request(query, formDataObject)
-    if(data.insert_projects.affected_rows == 1)
+   if (response.body && response.body.data && response.body.data.insert_projects.affected_rows == 1)
       displaySuccess()
    else
       displayError()
-
 }
 
 const getWinner = async () => {
-   const query = gql`
-      query {
-         projects(where: {winner: {_eq: true}}) {
-            link
-            title
-            description
-          }
-      }`
-
-      const { data } = await nhost.graphql.request(query)
-      return (data.projects ? data.projects : [])
+   // v4: nhost.graphql.request takes a single object { query, variables? }
+   const response = await nhost.graphql.request({
+      query: `
+         query {
+            projects(where: {winner: {_eq: true}}) {
+               link
+               title
+               description
+            }
+         }
+      `,
+   })
+   const data = response.body && response.body.data
+   return (data && data.projects ? data.projects : [])
 }
 
 form.addEventListener("submit", submitForm)

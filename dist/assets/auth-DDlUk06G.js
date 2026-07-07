@@ -1,1 +1,0 @@
-import{i as e,n as t,t as n}from"./nhost-DLnrXHa8.js";var r,i,a,o,s,c=e((()=>{n(),r=`/admin/index.html`,i=`/admin/login.html`,a=async({email:e,password:n})=>await t.auth.signIn({email:e,password:n}),o=async()=>{await t.auth.signOut()},s=async()=>await t.auth.isAuthenticatedAsync()}));export{o as a,r as i,s as n,i as o,a as r,c as t};

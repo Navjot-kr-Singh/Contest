@@ -1,11 +1,7 @@
-import { NhostClient } from '@nhost/nhost-js'
+import { createClient, withClientSideSessionMiddleware } from "@nhost/nhost-js";
 
-const nhost = new NhostClient({
+export const nhost = createClient({
   subdomain: import.meta.env.VITE_NHOST_SUBDOMAIN,
-  region: import.meta.env.VITE_NHOST_REGION
-})
-
-
-
-export { nhost }
-
+  region: import.meta.env.VITE_NHOST_REGION,
+  configure: [withClientSideSessionMiddleware],
+});

@@ -1,10 +1,16 @@
 import { isSignedIn } from "./auth.js"
-import { gql } from "graphql-request"
 import { nhost } from "./nhost.js"
 import { createProjectNode } from "./helper.js"
 
 window.onload = async() => {
-   const check = await isSignedIn()
+   // v4: Restore session from localStorage before checking auth state
+   try {
+      await nhost.refreshSession(0)
+   } catch (_) {
+      // No prior session
+   }
+
+   const check = isSignedIn()
    if(check)
       await renderPage()
    else
@@ -12,36 +18,44 @@ window.onload = async() => {
 }
 
 const renderPage = async () => {
-   const query = gql`
-    query MyQuery {
-    projects(order_by: {id: desc}) {
-        id
-        description
-        link
-        title
-        winner
-    }
-    }`
+   // v4: nhost.graphql.request takes a single object { query, variables? }
+   const response = await nhost.graphql.request({
+      query: `
+         query MyQuery {
+            projects(order_by: {id: desc}) {
+               id
+               description
+               link
+               title
+               winner
+            }
+         }
+      `,
+   })
 
-    const { data } = await nhost.graphql.request(query)
-    if(data.projects) {
+   const data = response.body && response.body.data
+   if(data && data.projects) {
       displayWinner(data.projects)
       displayProjects(data.projects)
-    }
+   }
 }
 
 const updateWinner = async (id) => {
-   const query = gql`
-   mutation MyMutation($id: Int) {
-      update_projects(where: {id: {_eq: $id}}, _set: {winner: true}) {
-        affected_rows
-      }
-    }`
+   // v4: nhost.graphql.request takes a single object { query, variables }
+   const response = await nhost.graphql.request({
+      query: `
+         mutation MyMutation($id: Int) {
+            update_projects(where: {id: {_eq: $id}}, _set: {winner: true}) {
+               affected_rows
+            }
+         }
+      `,
+      variables: { id },
+   })
 
-    const { data } = await nhost.graphql.request(query, { "id": id })
-    if(data.update_projects.affected_rows === 1)
+   const data = response.body && response.body.data
+   if(data && data.update_projects.affected_rows === 1)
       location.reload()
-
 }
 
 const displayProjects = (projects) => {
